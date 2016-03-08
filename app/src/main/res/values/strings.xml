@@ -1,4 +1,10 @@
 <resources>
     <string name="app_name">RingerTimer</string>
     <string name="action_settings">Settings</string>
+    <string name="choose_time">Choose time</string>
+    <string name="choose_sound">Choose sound</string>
+    <string name="add_ringer_timer">Add</string>
+    <string name="mute">Mute</string>
+    <string name="vibrate">Vibrate</string>
+    <string name="sound">Sound</string>
 </resources>
