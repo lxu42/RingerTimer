@@ -5,6 +5,8 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
 import android.os.Bundle;
 import android.support.v4.app.FragmentTransaction;
+import android.support.v4.app.LoaderManager;
+import android.support.v4.content.Loader;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
@@ -15,7 +17,8 @@ import android.widget.Button;
 /**
  * A placeholder fragment containing a simple view.
  */
-public class RingerTimerFragment extends Fragment {
+public class RingerTimerFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor> {
+    private static final int RINGER_TIMER_CURSOR_LOADER_ID = 94114;
     private RecyclerView mRecyclerView;
     private RingerTimerAdapter mRingerTimerAdapter;
     private RecyclerView.LayoutManager mLayoutManager;
@@ -50,9 +53,24 @@ public class RingerTimerFragment extends Fragment {
         });
 
         mRecyclerView = (RecyclerView) root.findViewById(R.id.ringer_timer_recyclerview);
-        if (mCursor == null) {
-            mCursor = RingerTimerStorageOperations.getAll(getContext());
-        }
+
+        getLoaderManager().initLoader(RINGER_TIMER_CURSOR_LOADER_ID, null, this);
+        return root;
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+    }
+
+    @Override
+    public Loader<Cursor> onCreateLoader(int id, Bundle args) {
+        return new RingerTimerCursorLoader(getContext());
+    }
+
+    @Override
+    public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
+        mCursor = data;
         if (mRingerTimerAdapter == null) {
             mRingerTimerAdapter = new RingerTimerAdapter(getContext(), mCursor);
         }
@@ -60,12 +78,13 @@ public class RingerTimerFragment extends Fragment {
         mRecyclerView.setAdapter(mRingerTimerAdapter);
         mLayoutManager = new LinearLayoutManager(getContext());
         mRecyclerView.setLayoutManager(mLayoutManager);
-        return root;
     }
 
     @Override
-    public void onSaveInstanceState(Bundle outState) {
-        super.onSaveInstanceState(outState);
+    public void onLoaderReset(Loader<Cursor> loader) {
+        if (mRingerTimerAdapter != null) {
+            mRingerTimerAdapter.setCursor(null);
+        }
     }
 
     private CreateRingerTimerFragment.IAddListener mAddListener = new CreateRingerTimerFragment.IAddListener() {
