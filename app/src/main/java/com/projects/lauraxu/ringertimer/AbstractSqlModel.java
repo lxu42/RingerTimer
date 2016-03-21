@@ -59,6 +59,11 @@ public class AbstractSqlModel implements ISqlModel {
     }
 
     @Override
+    public void set(String key, long value) {
+        mContentValues.put(key, value);
+    }
+
+    @Override
     public Object get(String key) {
         return mContentValues.get(key);
     }

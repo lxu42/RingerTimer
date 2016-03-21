@@ -8,12 +8,16 @@ import android.database.Cursor;
  */
 public class RingerTimerModel extends AbstractSqlModel{
 
-    public int getRowIndex() {
-        return (int) get(RingerTimer.Timer._ID);
+    public void setRowIndex(long rowIndex) {
+        set(RingerTimer.Timer._ID, rowIndex);
+    }
+
+    public long getRowIndex() {
+        return (long) get(RingerTimer.Timer._ID);
     }
 
     public void setHour(int hour) {
-        set(RingerTimer.Timer.HOUR, hour);
+        set(RingerTimer.Timer.HOUR, (Integer) hour);
     }
 
     public int getHour() {
@@ -21,7 +25,7 @@ public class RingerTimerModel extends AbstractSqlModel{
     }
 
     public void setMinute(int minute) {
-        set(RingerTimer.Timer.MINUTE, minute);
+        set(RingerTimer.Timer.MINUTE, (Integer) minute);
     }
 
     public int getMinute() {
@@ -29,7 +33,7 @@ public class RingerTimerModel extends AbstractSqlModel{
     }
 
     public void setRingerMode(int ringerMode) {
-        set(RingerTimer.Timer.RINGER_MODE, ringerMode);
+        set(RingerTimer.Timer.RINGER_MODE, (Integer) ringerMode);
     }
 
     public int getRingerMode() {

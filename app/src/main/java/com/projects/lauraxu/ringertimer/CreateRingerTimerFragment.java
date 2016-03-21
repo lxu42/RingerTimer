@@ -90,7 +90,6 @@ public class CreateRingerTimerFragment extends Fragment {
                     mAddListener.onAdd(mHour, mMinute, mRingerMode);
                     getActivity().getSupportFragmentManager().popBackStack();
                 }
-                setAlarm();
             }
         });
 
@@ -110,18 +109,7 @@ public class CreateRingerTimerFragment extends Fragment {
 
     // Private
 
-    private void setAlarm() {
-        AlarmManager alarmManager = (AlarmManager) getContext().getSystemService(Context.ALARM_SERVICE);
-        Intent intent = new Intent(getContext(), RingerTimerReceiver.class);
-        intent.putExtra(RingerTimerReceiver.RINGER_MODE_INTENT_EXTRA, mRingerMode);
-        PendingIntent pendingIntent = PendingIntent.getBroadcast(getContext(), 0, intent, PendingIntent.FLAG_ONE_SHOT);
 
-        Calendar calendar = Calendar.getInstance();
-        calendar.setTimeInMillis(System.currentTimeMillis());
-        calendar.set(Calendar.HOUR_OF_DAY, mHour);
-        calendar.set(Calendar.MINUTE, mMinute);
-        alarmManager.setInexactRepeating(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), AlarmManager.INTERVAL_DAY, pendingIntent);
-    }
 
     // Private declarations
 

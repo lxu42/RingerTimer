@@ -9,6 +9,7 @@ import android.database.Cursor;
 public interface ISqlModel {
     ContentValues getContentValues();
     void set(String key, Integer value);
+    void set(String key, long value);
     Object get(String key);
 
 }

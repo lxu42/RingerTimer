@@ -1,6 +1,10 @@
 package com.projects.lauraxu.ringertimer;
 
+import android.app.AlarmManager;
+import android.app.PendingIntent;
+import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.database.Cursor;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
@@ -14,6 +18,8 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+
+import java.util.Calendar;
 
 /**
  * A placeholder fragment containing a simple view.
@@ -111,6 +117,19 @@ public class RingerTimerFragment extends Fragment implements LoaderManager.Loade
         }
     }
 
+    private void setAlarm(RingerTimerModel ringerTimer) {
+        AlarmManager alarmManager = (AlarmManager) getContext().getSystemService(Context.ALARM_SERVICE);
+        Intent intent = new Intent(getContext(), RingerTimerReceiver.class);
+        intent.putExtra(RingerTimerReceiver.RINGER_MODE_INTENT_EXTRA, ringerTimer.getRingerMode());
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(getContext(), (int) ringerTimer.getRowIndex(), intent, PendingIntent.FLAG_ONE_SHOT);
+
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTimeInMillis(System.currentTimeMillis());
+        calendar.set(Calendar.HOUR_OF_DAY, ringerTimer.getHour());
+        calendar.set(Calendar.MINUTE, ringerTimer.getMinute());
+        alarmManager.setInexactRepeating(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), AlarmManager.INTERVAL_DAY, pendingIntent);
+    }
+
     private CreateRingerTimerFragment.IAddListener mAddListener = new CreateRingerTimerFragment.IAddListener() {
         @Override
         public void onAdd(int hour, int minute, int ringerMode) {
@@ -118,8 +137,11 @@ public class RingerTimerFragment extends Fragment implements LoaderManager.Loade
             ringerTimerModel.setHour(hour);
             ringerTimerModel.setMinute(minute);
             ringerTimerModel.setRingerMode(ringerMode);
+            long rowIndex = RingerTimerStorageOperations.insert(getContext(), ringerTimerModel);
+            ringerTimerModel.setRowIndex(rowIndex);
 
-            RingerTimerStorageOperations.insert(getContext(), ringerTimerModel);
+            setAlarm(ringerTimerModel);
+
             mCursor = RingerTimerStorageOperations.getAll(getContext());
             mRingerTimerAdapter.setCursor(mCursor);
             mRingerTimerAdapter.notifyDataSetChanged();
