@@ -23,6 +23,33 @@ public class RingerTimerStorageOperations {
         return rowIndex;
     }
 
+    public static void delete(Context context, long rowIndex) {
+        SQLiteDatabase db = new DbHelper(context).getWritableDatabase();
+        try {
+            db.delete(RingerTimer.Timer.TABLE_NAME, RingerTimer.Timer._ID + "=?", new String[]{Long.toString(rowIndex)});
+        } catch (SQLException e) {
+
+        }
+    }
+
+    public static void deleteAll(Context context) {
+        SQLiteDatabase db = new DbHelper(context).getWritableDatabase();
+        try {
+            db.delete(RingerTimer.Timer.TABLE_NAME, null, null);
+        } catch (SQLException e) {
+
+        }
+    }
+
+    public static void getByRowIndex(Context context, long rowIndex) {
+        SQLiteDatabase db = new DbHelper(context).getWritableDatabase();
+        try {
+            db.rawQuery("SELECT * FROM " + RingerTimer.Timer.TABLE_NAME + " WHERE " + RingerTimer.Timer._ID + "=" + Long.toString(rowIndex), null);
+        } catch (SQLException e) {
+
+        }
+    }
+
     public static Cursor getAll(Context context) {
         Cursor cursor = null;
         try {

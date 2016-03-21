@@ -13,9 +13,12 @@ import android.view.ViewGroup;
 public class RingerTimerAdapter extends CursorAdapter<RingerTimerViewHolder> {
     private Context mContext;
 
-    public RingerTimerAdapter(Context context, Cursor cursor) {
+    private IItemClickListener mItemClickListener;
+
+    public RingerTimerAdapter(Context context, Cursor cursor, IItemClickListener itemClickListener) {
         super(cursor);
         mContext = context;
+        mItemClickListener = itemClickListener;
     }
 
     @Override
@@ -29,11 +32,23 @@ public class RingerTimerAdapter extends CursorAdapter<RingerTimerViewHolder> {
         Cursor cursor = getCursor();
         if (cursor != null && cursor.getCount() > 0) {
             cursor.moveToPosition(position);
-            RingerTimerModel ringerTimer = RingerTimerModel.fromCursor(cursor);
+            final RingerTimerModel ringerTimer = RingerTimerModel.fromCursor(cursor);
             if (ringerTimer != null) {
                 viewHolder.time.setText(mContext.getResources().getString(R.string.time_text, ringerTimer.getHour(), ringerTimer.getMinute()));
                 viewHolder.ringerMode.setText(mContext.getResources().getString(R.string.ringer_mode_text, ringerTimer.getRingerMode()));
+//                viewHolder.root.setTag(RingerTimerViewHolder.RINGER_TIMER_ID_TAG, ringerTimer.getRowIndex());
+                viewHolder.root.setOnLongClickListener(new View.OnLongClickListener() {
+                    @Override
+                    public boolean onLongClick(View v) {
+                        mItemClickListener.onLongClick(ringerTimer.getRowIndex());
+                        return true;
+                    }
+                });
             }
         }
+    }
+
+    public interface IItemClickListener {
+        void onLongClick(long rowIndex);
     }
 }

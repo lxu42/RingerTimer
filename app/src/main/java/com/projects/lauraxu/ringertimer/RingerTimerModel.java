@@ -8,6 +8,10 @@ import android.database.Cursor;
  */
 public class RingerTimerModel extends AbstractSqlModel{
 
+    public int getRowIndex() {
+        return (int) get(RingerTimer.Timer._ID);
+    }
+
     public void setHour(int hour) {
         set(RingerTimer.Timer.HOUR, hour);
     }
