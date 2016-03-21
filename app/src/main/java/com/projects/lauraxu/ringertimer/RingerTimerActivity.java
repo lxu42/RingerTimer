@@ -14,6 +14,8 @@ public class RingerTimerActivity extends AppCompatActivity {
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, new RingerTimerFragment()).commitAllowingStateLoss();
+        if (savedInstanceState == null) {
+            getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, new RingerTimerFragment()).commit();
+        }
     }
 }
