@@ -6,7 +6,6 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
-import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
 import android.os.Bundle;
 import android.support.v4.app.FragmentTransaction;
@@ -15,6 +14,9 @@ import android.support.v4.content.Loader;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
@@ -43,37 +45,7 @@ public class RingerTimerFragment extends Fragment implements LoaderManager.Loade
         if (savedInstanceState != null) {
             mEditRowIndex = savedInstanceState.getLong(EDIT_RINGER_TIMER_KEY);
         }
-        FloatingActionButton fab = (FloatingActionButton) root.findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                CreateRingerTimerFragment createRingerTimerFragment = new CreateRingerTimerFragment();
-                createRingerTimerFragment.setAddListener(mAddListener);
-                FragmentTransaction fragmentTransaction = RingerTimerFragment.this.getFragmentManager().beginTransaction();
-                fragmentTransaction.replace(R.id.fragment_container, createRingerTimerFragment);
-                fragmentTransaction.addToBackStack(null);
-                fragmentTransaction.commit();
-            }
-        });
-
-        Button testConsoleButton = (Button) root.findViewById(R.id.test_console_button);
-        testConsoleButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                FragmentTransaction fragmentTransaction = RingerTimerFragment.this.getFragmentManager().beginTransaction();
-                fragmentTransaction.replace(R.id.fragment_container, new TestConsoleFragment());
-                fragmentTransaction.addToBackStack(null);
-                fragmentTransaction.commit();
-            }
-        });
-
-        Button deleteAllButton = (Button) root.findViewById(R.id.delete_all_button);
-        deleteAllButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                RingerTimerStorageOperations.deleteAll(getContext());
-            }
-        });
+        setHasOptionsMenu(true);
 
         mRecyclerView = (RecyclerView) root.findViewById(R.id.ringer_timer_recyclerview);
 
@@ -85,6 +57,34 @@ public class RingerTimerFragment extends Fragment implements LoaderManager.Loade
         }
 
         return root;
+    }
+
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        inflater.inflate(R.menu.action_bar_add, menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        FragmentTransaction fragmentTransaction = RingerTimerFragment.this.getFragmentManager().beginTransaction();
+        switch(item.getItemId()) {
+            case R.id.add_menu_item:
+                CreateRingerTimerFragment createRingerTimerFragment = new CreateRingerTimerFragment();
+                createRingerTimerFragment.setAddListener(mAddListener);
+                fragmentTransaction.replace(R.id.fragment_container, createRingerTimerFragment);
+                fragmentTransaction.addToBackStack(null);
+                fragmentTransaction.commit();
+                break;
+            case R.id.delete_all_item:
+                RingerTimerStorageOperations.deleteAll(getContext());
+                break;
+            case R.id.test_console_item:
+                fragmentTransaction.replace(R.id.fragment_container, new TestConsoleFragment());
+                fragmentTransaction.addToBackStack(null);
+                fragmentTransaction.commit();
+                break;
+        }
+        return true;
     }
 
     @Override
@@ -117,20 +117,7 @@ public class RingerTimerFragment extends Fragment implements LoaderManager.Loade
         }
     }
 
-    private void setAlarm(RingerTimerModel ringerTimer) {
-        AlarmManager alarmManager = (AlarmManager) getContext().getSystemService(Context.ALARM_SERVICE);
-        Intent intent = new Intent(getContext(), RingerTimerReceiver.class);
-        intent.putExtra(RingerTimerReceiver.RINGER_MODE_INTENT_EXTRA, ringerTimer.getRingerMode());
-        PendingIntent pendingIntent = PendingIntent.getBroadcast(getContext(), (int) ringerTimer.getRowIndex(), intent, PendingIntent.FLAG_ONE_SHOT);
-
-        Calendar calendar = Calendar.getInstance();
-        calendar.setTimeInMillis(System.currentTimeMillis());
-        calendar.set(Calendar.HOUR_OF_DAY, ringerTimer.getHour());
-        calendar.set(Calendar.MINUTE, ringerTimer.getMinute());
-        alarmManager.setInexactRepeating(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), AlarmManager.INTERVAL_DAY, pendingIntent);
-    }
-
-    private CreateRingerTimerFragment.IAddListener mAddListener = new CreateRingerTimerFragment.IAddListener() {
+    private CreateRingerTimerFragment.ISaveListener mAddListener = new CreateRingerTimerFragment.ISaveListener() {
         @Override
         public void onAdd(int hour, int minute, int ringerMode) {
             RingerTimerModel ringerTimerModel = new RingerTimerModel();
@@ -140,7 +127,22 @@ public class RingerTimerFragment extends Fragment implements LoaderManager.Loade
             long rowIndex = RingerTimerStorageOperations.insert(getContext(), ringerTimerModel);
             ringerTimerModel.setRowIndex(rowIndex);
 
-            setAlarm(ringerTimerModel);
+            Util.setAlarm(getContext(), rowIndex, ringerMode, hour, minute);
+
+            mCursor = RingerTimerStorageOperations.getAll(getContext());
+            mRingerTimerAdapter.setCursor(mCursor);
+            mRingerTimerAdapter.notifyDataSetChanged();
+        }
+
+        @Override
+        public void onEdit(long rowIndex, int hour, int minute, int ringerMode) {
+            RingerTimerModel ringerTimerModel = RingerTimerStorageOperations.getByRowIndex(getContext(), rowIndex);
+            ringerTimerModel.setHour(hour);
+            ringerTimerModel.setMinute(minute);
+            ringerTimerModel.setRingerMode(ringerMode);
+            RingerTimerStorageOperations.update(getContext(), rowIndex, ringerTimerModel);
+
+            Util.setAlarm(getContext(), rowIndex, ringerMode, hour, minute);
 
             mCursor = RingerTimerStorageOperations.getAll(getContext());
             mRingerTimerAdapter.setCursor(mCursor);
@@ -152,7 +154,22 @@ public class RingerTimerFragment extends Fragment implements LoaderManager.Loade
         @Override
         public void onClick(DialogInterface dialog, int which) {
             if (which == 0) { // EDIT
+                Bundle bundle = new Bundle();
+                RingerTimerModel ringerTimer = RingerTimerStorageOperations.getByRowIndex(getContext(), mEditRowIndex);
+                if (ringerTimer != null) {
+                    bundle.putInt(CreateRingerTimerFragment.RINGER_HOUR_KEY, ringerTimer.getHour());
+                    bundle.putInt(CreateRingerTimerFragment.RINGER_MINUTE_KEY, ringerTimer.getMinute());
+                    bundle.putInt(CreateRingerTimerFragment.RINGER_MODE_KEY, ringerTimer.getRingerMode());
+                    bundle.putLong(CreateRingerTimerFragment.RINGER_ROW_INDEX, ringerTimer.getRowIndex());
+                }
 
+                CreateRingerTimerFragment createRingerTimerFragment = new CreateRingerTimerFragment();
+                createRingerTimerFragment.setAddListener(mAddListener);
+                createRingerTimerFragment.setArguments(bundle);
+                FragmentTransaction fragmentTransaction = RingerTimerFragment.this.getFragmentManager().beginTransaction();
+                fragmentTransaction.replace(R.id.fragment_container, createRingerTimerFragment);
+                fragmentTransaction.addToBackStack(null);
+                fragmentTransaction.commit();
             } else { // DELETE
                 RingerTimerStorageOperations.getByRowIndex(getContext(), mEditRowIndex);
                 RingerTimerStorageOperations.delete(getContext(), mEditRowIndex);

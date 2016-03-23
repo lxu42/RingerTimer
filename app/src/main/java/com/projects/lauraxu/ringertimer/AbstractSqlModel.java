@@ -2,6 +2,7 @@ package com.projects.lauraxu.ringertimer;
 
 import android.content.ContentValues;
 import android.database.Cursor;
+import android.provider.BaseColumns;
 
 /**
  * Created by lauraxu on 3/12/16.
@@ -34,7 +35,11 @@ public class AbstractSqlModel implements ISqlModel {
                     contentValues.put(columnName, cursor.getFloat(i));
                     break;
                 case Cursor.FIELD_TYPE_INTEGER:
-                    contentValues.put(columnName, cursor.getInt(i));
+                    if (columnName.equals(BaseColumns._ID)) {
+                        contentValues.put(columnName, cursor.getLong(i));
+                    } else {
+                        contentValues.put(columnName, cursor.getInt(i));
+                    }
                     break;
                 case Cursor.FIELD_TYPE_STRING:
                     contentValues.put(columnName, cursor.getString(i));
@@ -44,6 +49,7 @@ public class AbstractSqlModel implements ISqlModel {
                     break;
             }
         }
+
 
         return model;
     }
