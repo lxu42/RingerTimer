@@ -1,21 +1,20 @@
 package com.projects.lauraxu.ringertimer;
 
-import android.app.AlarmManager;
-import android.app.PendingIntent;
 import android.app.TimePickerDialog;
-import android.content.Context;
 import android.content.DialogInterface;
-import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentTransaction;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.TimePicker;
-
-import java.util.Calendar;
 
 /**
  * Created by lauraxu on 3/8/16.
@@ -23,7 +22,10 @@ import java.util.Calendar;
 public class CreateRingerTimerFragment extends Fragment {
     private static final String TAG = "CreateRingerTimerFragment";
 
-    private static final String RINGER_MODE_KEY = "soundPickerKey";
+    public static final String RINGER_MODE_KEY = "ringerModeKey";
+    public static final String RINGER_HOUR_KEY = "ringerHourKey";
+    public static final String RINGER_MINUTE_KEY = "ringerMinuteKey";
+    public static final String RINGER_ROW_INDEX = "ringerRowIndex";
 
     private TimePickerDialogFragment mTimePickerDialogFragment;
     private RingerModeDialogFragment mRingerModeDialogFragment;
@@ -33,16 +35,28 @@ public class CreateRingerTimerFragment extends Fragment {
     private int mRingerMode = 0;
     private int mHour = 0;
     private int mMinute = 0;
+    private long mRowIndex = RingerTimer.Timer.INVALID_ROW_INDEX;
 
-    private IAddListener mAddListener;
+    private ISaveListener mSaveListener;
 
     // Overrides
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         final View root = inflater.inflate(R.layout.create_ringer_timer_fragment, container, false);
+        setHasOptionsMenu(true);
+        Bundle bundle = getArguments();
+        if (bundle != null) {
+            mRingerMode = bundle.getInt(RINGER_MODE_KEY);
+            mHour = bundle.getInt(RINGER_HOUR_KEY);
+            mMinute = bundle.getInt(RINGER_MINUTE_KEY);
+            mRowIndex = bundle.getLong(RINGER_ROW_INDEX);
+        }
         if (savedInstanceState != null) {
             mRingerMode = savedInstanceState.getInt(RINGER_MODE_KEY);
+            mHour = savedInstanceState.getInt(RINGER_HOUR_KEY);
+            mMinute = savedInstanceState.getInt(RINGER_MINUTE_KEY);
+            mRowIndex = savedInstanceState.getLong(RINGER_ROW_INDEX);
         }
 
         mTimePickerDialogFragment = (TimePickerDialogFragment) getActivity().getSupportFragmentManager().findFragmentByTag(TimePickerDialogFragment.TAG);
@@ -58,7 +72,7 @@ public class CreateRingerTimerFragment extends Fragment {
         mTimeTextView = (TextView) root.findViewById(R.id.time_text);
         mTimeTextView.setText(getResources().getString(R.string.time_text, mHour, mMinute));
 
-        Button chooseTimeButton = (Button) root.findViewById(R.id.choose_time);
+        LinearLayout chooseTimeButton = (LinearLayout) root.findViewById(R.id.choose_time);
         chooseTimeButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -69,9 +83,9 @@ public class CreateRingerTimerFragment extends Fragment {
         });
 
         mRingerModeTextView = (TextView) root.findViewById(R.id.ringer_mode_text);
-        mRingerModeTextView.setText(getResources().getString(R.string.ringer_mode_text, mRingerMode));
+        mRingerModeTextView.setText(getResources().getString(R.string.ringer_mode_text, RingerTimerModel.getRingerModeName(getContext(), mRingerMode)));
 
-        Button chooseSoundButton = (Button) root.findViewById(R.id.choose_sound);
+        LinearLayout chooseSoundButton = (LinearLayout) root.findViewById(R.id.choose_sound);
         chooseSoundButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -82,17 +96,6 @@ public class CreateRingerTimerFragment extends Fragment {
             }
         });
 
-        Button addRingerTimerButton = (Button) root.findViewById(R.id.add_ringer_timer);
-        addRingerTimerButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (mAddListener != null) {
-                    mAddListener.onAdd(mHour, mMinute, mRingerMode);
-                    getActivity().getSupportFragmentManager().popBackStack();
-                }
-            }
-        });
-
         return root;
     }
 
@@ -100,11 +103,34 @@ public class CreateRingerTimerFragment extends Fragment {
     public void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
         outState.putInt(RINGER_MODE_KEY, mRingerMode);
+        outState.putInt(RINGER_HOUR_KEY, mHour);
+        outState.putInt(RINGER_MINUTE_KEY, mMinute);
+        outState.putLong(RINGER_ROW_INDEX, mRowIndex);
+    }
+
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        inflater.inflate(R.menu.action_bar_save, menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        if (item.getItemId() ==  R.id.save_menu_item) {
+            if (mSaveListener != null) {
+                if (mRowIndex == RingerTimer.Timer.INVALID_ROW_INDEX) {
+                    mSaveListener.onAdd(mHour, mMinute, mRingerMode);
+                } else {
+                    mSaveListener.onEdit(mRowIndex, mHour, mMinute, mRingerMode);
+                }
+                getActivity().getSupportFragmentManager().popBackStack();
+            }
+        }
+        return true;
     }
 
     // Public
-    public void setAddListener(IAddListener listener) {
-        mAddListener = listener;
+    public void setAddListener(ISaveListener listener) {
+        mSaveListener = listener;
     }
 
     // Private
@@ -131,7 +157,8 @@ public class CreateRingerTimerFragment extends Fragment {
     };
 
     // Inner classes
-    public interface IAddListener {
+    public interface ISaveListener {
         void onAdd(int hour, int minute, int ringerMode);
+        void onEdit(long rowIndex, int hour, int minute, int ringerMode);
     }
 }

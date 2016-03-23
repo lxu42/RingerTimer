@@ -35,8 +35,8 @@ public class RingerTimerAdapter extends CursorAdapter<RingerTimerViewHolder> {
             final RingerTimerModel ringerTimer = RingerTimerModel.fromCursor(cursor);
             if (ringerTimer != null) {
                 viewHolder.time.setText(mContext.getResources().getString(R.string.time_text, ringerTimer.getHour(), ringerTimer.getMinute()));
-                viewHolder.ringerMode.setText(mContext.getResources().getString(R.string.ringer_mode_text, ringerTimer.getRingerMode()));
-//                viewHolder.root.setTag(RingerTimerViewHolder.RINGER_TIMER_ID_TAG, ringerTimer.getRowIndex());
+                viewHolder.ringerMode.setText(mContext.getResources().getString(R.string.ringer_mode_text, ringerTimer.getRingerModeName(mContext)));
+                viewHolder.root.setTag(R.id.RINGER_TIMER_ID_TAG, ringerTimer.getRowIndex());
                 viewHolder.root.setOnLongClickListener(new View.OnLongClickListener() {
                     @Override
                     public boolean onLongClick(View v) {

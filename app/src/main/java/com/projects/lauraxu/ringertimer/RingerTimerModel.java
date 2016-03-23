@@ -1,7 +1,9 @@
 package com.projects.lauraxu.ringertimer;
 
 
+import android.content.Context;
 import android.database.Cursor;
+import android.media.AudioManager;
 
 /**
  * Created by lauraxu on 3/9/16.
@@ -9,11 +11,11 @@ import android.database.Cursor;
 public class RingerTimerModel extends AbstractSqlModel{
 
     public void setRowIndex(long rowIndex) {
-        set(RingerTimer.Timer._ID, rowIndex);
+        set(RingerTimer.Timer._ID, (Long) rowIndex);
     }
 
     public long getRowIndex() {
-        return (long) get(RingerTimer.Timer._ID);
+        return (Long) get(RingerTimer.Timer._ID);
     }
 
     public void setHour(int hour) {
@@ -38,6 +40,32 @@ public class RingerTimerModel extends AbstractSqlModel{
 
     public int getRingerMode() {
         return (int) get(RingerTimer.Timer.RINGER_MODE);
+    }
+
+    public String getRingerModeName(Context context) {
+        switch(getRingerMode()) {
+            case AudioManager.RINGER_MODE_SILENT:
+                return context.getResources().getString(R.string.mute);
+            case AudioManager.RINGER_MODE_VIBRATE:
+                return context.getResources().getString(R.string.vibrate);
+            case AudioManager.RINGER_MODE_NORMAL:
+                return context.getResources().getString(R.string.sound);
+            default:
+                return "";
+        }
+    }
+
+    public static String getRingerModeName(Context context, int ringerMode) {
+        switch(ringerMode) {
+            case AudioManager.RINGER_MODE_SILENT:
+                return context.getResources().getString(R.string.mute);
+            case AudioManager.RINGER_MODE_VIBRATE:
+                return context.getResources().getString(R.string.vibrate);
+            case AudioManager.RINGER_MODE_NORMAL:
+                return context.getResources().getString(R.string.sound);
+            default:
+                return "";
+        }
     }
 
     public static RingerTimerModel fromCursor(Cursor cursor) {

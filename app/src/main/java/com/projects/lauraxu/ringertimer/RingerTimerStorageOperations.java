@@ -23,6 +23,17 @@ public class RingerTimerStorageOperations {
         return rowIndex;
     }
 
+    public static long update(Context context, long rowIndex, RingerTimerModel ringerTimer) {
+        SQLiteDatabase db = new DbHelper(context).getWritableDatabase();
+        try {
+            rowIndex = db.update(RingerTimer.Timer.TABLE_NAME, ringerTimer.getContentValues(), RingerTimer.Timer._ID + "=?", new String[]{Long.toString(rowIndex)});
+        } catch (SQLException e) {
+            rowIndex = RingerTimer.Timer.INVALID_ROW_INDEX;
+        }
+
+        return rowIndex;
+    }
+
     public static void delete(Context context, long rowIndex) {
         SQLiteDatabase db = new DbHelper(context).getWritableDatabase();
         try {
@@ -41,13 +52,18 @@ public class RingerTimerStorageOperations {
         }
     }
 
-    public static void getByRowIndex(Context context, long rowIndex) {
+    public static RingerTimerModel getByRowIndex(Context context, long rowIndex) {
+        Cursor cursor = null;
         SQLiteDatabase db = new DbHelper(context).getWritableDatabase();
         try {
-            db.rawQuery("SELECT * FROM " + RingerTimer.Timer.TABLE_NAME + " WHERE " + RingerTimer.Timer._ID + "=" + Long.toString(rowIndex), null);
-        } catch (SQLException e) {
-
+            cursor = db.rawQuery("SELECT * FROM " + RingerTimer.Timer.TABLE_NAME + " WHERE " + RingerTimer.Timer._ID + "=" + Long.toString(rowIndex), null);
+        } catch (SQLException e) {}
+        finally {
+            if (cursor != null && !cursor.isClosed()) {
+//                cursor.close();
+            }
         }
+        return RingerTimerModel.fromCursor(cursor);
     }
 
     public static Cursor getAll(Context context) {
